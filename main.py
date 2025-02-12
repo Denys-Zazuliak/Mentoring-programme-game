@@ -1,5 +1,6 @@
 # imports
 import pygame
+import math
 
 # some constants
 from pygame.locals import (
@@ -13,10 +14,9 @@ from pygame.locals import (
     QUIT,
 )
 
-
 # change to whatever 50x50 pixelart png you want with a transparent background
 player_img = "fish.png"
-
+enemy_img = "shark.png"
 
 # classes for the player and enemies and stuff will go here
 class Player(pygame.sprite.Sprite):
@@ -26,7 +26,7 @@ class Player(pygame.sprite.Sprite):
         self.img = pygame.image.load(player_img).convert_alpha()
         # can change to smth other than 50x50 pixels if you want
         self.rect = pygame.Rect(0, 0, 50, 50)
-    
+
     # it moves
     def move(self, pressed_keys):
         if pressed_keys[K_UP]:
@@ -37,7 +37,7 @@ class Player(pygame.sprite.Sprite):
             self.rect.move_ip(-v, 0)
         if pressed_keys[K_RIGHT]:
             self.rect.move_ip(v, 0)
-    
+
     # stops player wandering into the endless abyss off screen
     def wall_collide(self):
         if self.rect.left < 0:
@@ -48,6 +48,28 @@ class Player(pygame.sprite.Sprite):
             self.rect.top = 0
         if self.rect.bottom >= SCREEN_HEIGHT:
             self.rect.bottom = SCREEN_HEIGHT
+
+
+
+# Enemy class that chases the player
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.img = pygame.image.load(enemy_img).convert_alpha()
+        self.rect = pygame.Rect(SCREEN_WIDTH - 50, SCREEN_HEIGHT - 50, 50, 50)  # Start at the bottom-right corner
+        self.speed = 3  # Speed of the enemy
+
+    def move_towards_player(self, player_position):
+        # Calculate the direction vector to the player
+        dx = player_position[0] - self.rect.centerx
+        dy = player_position[1] - self.rect.centery
+        distance = math.hypot(dx, dy)
+        if distance == 0:
+            return  # Guard against division by zero
+
+
+        dx, dy = dx / distance, dy / distance
+        self.rect.move_ip(dx * self.speed, dy * self.speed)
 
 
 # quite important for pygame to work
@@ -72,12 +94,11 @@ all_sprites.add(player)
 clock = pygame.time.Clock()
 FPS = 30
 
-
 # game loop
 running = True
 while running:
-    
-    # checks if the user wants to quit 
+
+    # checks if the user wants to quit
     # idk why they would ever want to leave this masterpiece tho
     for event in pygame.event.get():
         if event.type == QUIT:
@@ -85,25 +106,24 @@ while running:
         elif event.type == KEYDOWN:
             if event.key == K_ESCAPE:
                 running = False
-    
+
     # gets dict of all keys pressed for moving player
     pressed_keys = pygame.key.get_pressed()
-    
+
     # updating player stuff
     player.move(pressed_keys)
     player.wall_collide()
-    
+
     screen.fill((0, 0, 0))
-    
+
     # draw sprites to screen surface
     for entity in all_sprites:
         screen.blit(entity.img, entity.rect)
-    
+
     # updates everything
     pygame.display.flip()
     # wait a bit
     clock.tick(FPS)
-    
 
 # goodbye
 pygame.quit()
