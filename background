@@ -1,0 +1,202 @@
+import pygame
+import math
+import random
+
+# Initialize Pygame
+pygame.init()
+
+# Screen dimensions
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+
+# Colours used in the background
+TOP_COLOUR = (173, 216, 230)  # Light, sunlit blue (water surface)
+BOTTOM_COLOUR = (0, 0, 128)  # Deep navy blue (ocean depths)
+WAVE_COLOUR = (255, 255, 255, 90)  # White semi-transparent for waves
+BEAM_COLOUR = (255, 255, 224, 40)  # Light yellowish beams (RGBA)
+CORAL_COLOUR = (139, 69, 19)  # Brownish colour for coral silhouettes
+BUBBLE_COLOUR = (224, 255, 255)  # Light cyan for bubbles
+
+# Frame rate
+FPS = 60
+
+
+def create_gradient_surface(width, height, top_colour, bottom_colour):
+    """
+    Create a surface with a vertical gradient from top_colour to bottom_colour.
+    """
+    gradient = pygame.Surface((width, height))
+    for y in range(height):
+        # Compute interpolation factor (0 at top; 1 at bottom)
+        factor = y / height
+        # Linearly interpolate each colour channel
+        red = int(top_colour[0] + factor * (bottom_colour[0] - top_colour[0]))
+        green = int(top_colour[1] + factor * (bottom_colour[1] - top_colour[1]))
+        blue = int(top_colour[2] + factor * (bottom_colour[2] - top_colour[2]))
+        pygame.draw.line(gradient, (red, green, blue), (0, y), (width, y))
+    return gradient
+
+
+class OceanBackground:
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+
+        # Create a precomputed gradient surface
+        self.gradient_surface = create_gradient_surface(width, height, TOP_COLOUR, BOTTOM_COLOUR)
+
+        # Variables for animated waves
+        self.wave_phase = 0
+        self.wave_speed = 0.05
+        self.wave_amplitude = 10
+        self.wave_frequency = 0.02
+
+        # Create bubbles
+        self.bubbles = self.create_bubbles(15)  # Number of bubbles to draw
+
+    def create_bubbles(self, count):
+        """
+        Initialize a list of bubbles with random positions near the bottom.
+        Each bubble is a dictionary containing x, y positions and a radius.
+        """
+        bubbles = []
+        for _ in range(count):
+            bubble = {
+                'x': random.randint(50, self.width - 50),
+                'y': random.randint(self.height - 100, self.height - 10),
+                'radius': random.randint(3, 8),
+                'speed': random.uniform(0.5, 1.5)
+            }
+            bubbles.append(bubble)
+        return bubbles
+
+    def update_bubbles(self):
+        """
+        Update bubble positions to simulate a rising effect.
+        When a bubble moves off the top, reposition it near the bottom.
+        """
+        for bubble in self.bubbles:
+            bubble['y'] -= bubble['speed']
+            if bubble['y'] + bubble['radius'] < 0:
+                bubble['x'] = random.randint(50, self.width - 50)
+                bubble['y'] = self.height + random.randint(5, 50)
+                bubble['radius'] = random.randint(3, 8)
+                bubble['speed'] = random.uniform(0.5, 1.5)
+
+    def draw(self, screen):
+        # Draw the static ocean gradient
+        screen.blit(self.gradient_surface, (0, 0))
+
+        # Draw animated light beams (soft beams are drawn first)
+        self.draw_light_beams(screen)
+
+        # Draw animated waves near the surface
+        self.draw_waves(screen)
+
+        # Draw faint silhouettes of marine details (e.g., coral)
+        self.draw_coral(screen)
+
+        # Update and draw bubbles
+        self.update_bubbles()
+        self.draw_bubbles(screen)
+
+    def draw_waves(self, screen):
+        """
+        Draw animated sinusoidal waves across the top of the screen.
+        """
+        points = []
+        # Compute wave points across the width of the screen
+        for x in range(0, self.width, 5):
+            y = int(50 + self.wave_amplitude * math.sin(self.wave_frequency * x + self.wave_phase))
+            points.append((x, y))
+        # Advance the phase for the next frame
+        self.wave_phase += self.wave_speed
+
+        # Create a transparent surface to draw waves
+        wave_surface = pygame.Surface((self.width, 60), pygame.SRCALPHA)
+        if len(points) > 1:
+            # Draw the wave line
+            pygame.draw.aalines(wave_surface, WAVE_COLOUR, False, points)
+        # Blit the wave surface onto the screen (positioned near the top)
+        screen.blit(wave_surface, (0, 0))
+
+    def draw_light_beams(self, screen):
+        """
+        Draw soft beams of light filtering down from the surface.
+        The beams are drawn using semi-transparent polygons.
+        """
+        # Create a surface with per-pixel alpha to handle transparency
+        beam_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        # Define a few beam positions at the top for variety
+        beam_positions = [self.width * 0.2, self.width * 0.5, self.width * 0.8]
+        for pos in beam_positions:
+            # Define a polygon that simulates a light beam
+            beam_width = 100
+            points = [
+                (pos - beam_width * 0.5, 0),
+                (pos + beam_width * 0.5, 0),
+                (pos + beam_width * 1.5, self.height),
+                (pos - beam_width * 1.5, self.height)
+            ]
+            pygame.draw.polygon(beam_surface, BEAM_COLOUR, points)
+        # Overlay the beam surface onto the screen
+        screen.blit(beam_surface, (0, 0))
+
+    def draw_bubbles(self, screen):
+        """
+        Draw rising bubbles as circles on the screen.
+        """
+        for bubble in self.bubbles:
+            pygame.draw.circle(screen, BUBBLE_COLOUR, (int(bubble['x']), int(bubble['y'])), bubble['radius'], 1)
+
+    def draw_coral(self, screen):
+        """
+        Draw faint silhouettes of coral or distant marine life near the ocean floor.
+        This is done by drawing low-opacity shapes near the bottom of the screen.
+        """
+        coral_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        # Coral 1
+        coral1_points = [
+            (100, self.height - 20),
+            (120, self.height - 60),
+            (140, self.height - 30)
+        ]
+        # Coral 2
+        coral2_points = [
+            (600, self.height - 20),
+            (620, self.height - 70),
+            (640, self.height - 40)
+        ]
+        pygame.draw.polygon(coral_surface, (*CORAL_COLOUR, 100), coral1_points)
+        pygame.draw.polygon(coral_surface, (*CORAL_COLOUR, 100), coral2_points)
+        screen.blit(coral_surface, (0, 0))
+
+
+def main():
+    # Set up the main game window
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("Ocean-Themed Background")
+    clock = pygame.time.Clock()
+
+    # Instantiate the OceanBackground object
+    background = OceanBackground(SCREEN_WIDTH, SCREEN_HEIGHT)
+
+    running = True
+    while running:
+        # Handle events (quit event)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        # Draw background layers
+        background.draw(screen)
+
+        # Update the display and maintain frame rate
+        pygame.display.flip()
+        clock.tick(FPS)
+
+    pygame.quit()
+
+
+if __name__ == "__main__":
+    main()
