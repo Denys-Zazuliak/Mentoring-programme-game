@@ -116,6 +116,8 @@ class Game:
         self.running = True
         self.font = py.font.SysFont("Arial", 20)
         self.count = 1
+        self.score = 0
+        self.high_score = 0
 
         self.background = OceanBackground(SCREEN_WIDTH, SCREEN_HEIGHT)
 
@@ -142,12 +144,32 @@ class Game:
     def end_screen(self):
         self.running = True
 
+        if self.score > self.high_score:
+            self.high_score = self.score
+
+        text1 = self.font.render("GAME OVER", True, (255, 255, 255))
+        text1_rect = text1.get_rect()
+        text1_rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 40)
+
+        text2 = self.font.render("press enter to restart", True, (255, 255, 255))
+        text2_rect = text2.get_rect()
+        text2_rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 20)
+
+        text3 = self.font.render(f"score: {self.score}", True, (255, 255, 255))
+        text3_rect = text3.get_rect()
+        text3_rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
+
+        text4 = self.font.render(f"high score: {self.high_score}", True, (255, 255, 255))
+        text4_rect = text4.get_rect()
+        text4_rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 20)
+
         self.screen.fill((0, 0, 0))
-        text = self.font.render("GAME OVER - press enter to restart", True, (255, 255, 255))
-        text_rect = text.get_rect()
-        text_rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
-        self.screen.fill((0, 0, 0))
-        self.screen.blit(text, text_rect)
+
+        self.screen.blit(text1, text1_rect)
+        self.screen.blit(text2, text2_rect)
+        self.screen.blit(text3, text3_rect)
+        self.screen.blit(text4, text4_rect)
+
         py.display.flip()
 
         while self.running:
@@ -166,6 +188,7 @@ class Game:
         self.sprites.append(self.player)
         self.running = True
         self.count = 1
+        self.score = 0
 
         self.main_screen()
 
@@ -185,9 +208,13 @@ class Game:
 
             keys = py.key.get_pressed()
 
-            text = self.font.render(f"health: {self.player.get_health()}", True, (255, 255, 255))
-            text_rect = text.get_rect()
-            text_rect.center = (SCREEN_WIDTH // 2, 20)
+            text1 = self.font.render(f"health: {self.player.get_health()}", True, (255, 255, 255))
+            text1_rect = text1.get_rect()
+            text1_rect.center = (SCREEN_WIDTH // 2, 20)
+
+            text2 = self.font.render(f"score: {self.score}", True, (255, 255, 255))
+            text2_rect = text2.get_rect()
+            text2_rect.center = (SCREEN_WIDTH // 2, 40)
 
             for i in range(len(self.projectiles) - 1, 0, -1):
                 self.projectiles[i].move()
@@ -221,13 +248,18 @@ class Game:
 
             self.background.draw(self.screen)
 
-            self.screen.blit(text, text_rect)
+            self.screen.blit(text1, text1_rect)
+            self.screen.blit(text2, text2_rect)
             for sprite in self.sprites:
                 self.screen.blit(sprite.img, sprite.rect)
 
             py.display.flip()
             self.clock.tick(FPS)
             self.count += 1
+
+            if self.count % FPS == 0:
+                self.score += 1
+
         self.end_screen()
 
 class Player(py.sprite.Sprite):
