@@ -44,7 +44,7 @@ class OceanBackground:
         self.wave_speed = 0.05
         self.wave_amplitude = 10
         self.wave_frequency = 0.02
-        self.bubbles = self.create_bubbles(15)  # Number of bubbles to draw
+        self.bubbles = self.create_bubbles(15)
 
     def create_bubbles(self, count):
         bubbles = []
@@ -71,7 +71,6 @@ class OceanBackground:
         screen.blit(self.gradient_surface, (0, 0))
         self.draw_light_beams(screen)
         self.draw_waves(screen)
-        self.draw_coral(screen)
         self.update_bubbles()
         self.draw_bubbles(screen)
 
@@ -102,23 +101,7 @@ class OceanBackground:
 
     def draw_bubbles(self, screen):
         for bubble in self.bubbles:
-            py.draw.circle(screen, BUBBLE_COLOUR, (int(bubble['x']), int(bubble['y'])), bubble['radius'], 1)
-
-    def draw_coral(self, screen):
-        coral_surface = py.Surface((self.width, self.height), py.SRCALPHA)
-        coral1_points = [
-            (100, self.height - 20),
-            (120, self.height - 60),
-            (140, self.height - 30)
-        ]
-        coral2_points = [
-            (600, self.height - 20),
-            (620, self.height - 70),
-            (640, self.height - 40)
-        ]
-        py.draw.polygon(coral_surface, (*CORAL_COLOUR, 100), coral1_points)
-        py.draw.polygon(coral_surface, (*CORAL_COLOUR, 100), coral2_points)
-        screen.blit(coral_surface, (0, 0))
+            py.draw.circle(screen, BUBBLE_COLOUR, (int(bubble['x']), int(bubble['y'])), bubble['radius'], 2)
 
 class Game:
     def __init__(self):
