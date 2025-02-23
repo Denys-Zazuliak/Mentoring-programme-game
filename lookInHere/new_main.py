@@ -3,7 +3,6 @@ import pygame as py
 import random
 import math
 
-
 # CONSTANTS
 SCREEN_WIDTH = 600
 SCREEN_HEIGHT = 600
@@ -60,13 +59,18 @@ class Game:
 
     def start_screen(self):
         # create text
-        text = self.font.render("press enter to start", True, (255, 255, 255))
-        text_rect = text.get_rect()
-        text_rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
+        text1 = self.font.render("press enter to start", True, (255, 255, 255))
+        text1_rect = text1.get_rect()
+        text1_rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
+
+        text2 = self.font.render("arrows to move, space to shoot", True, (255, 255, 255))
+        text2_rect = text2.get_rect()
+        text2_rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 20)
 
         # display text
         self.screen.fill((0, 0, 0))
-        self.screen.blit(text, text_rect)
+        self.screen.blit(text1, text1_rect)
+        self.screen.blit(text2, text2_rect)
         py.display.flip()
 
         # loop for quiting game
@@ -237,11 +241,13 @@ class Game:
                 self.score += 1
         py.quit()
 
+
 class Player(py.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.img = py.image.load(PLAYER_IMG).convert_alpha()
-        self.rect = py.Rect(SCREEN_WIDTH // 2 - IMAGE_SIZE // 2, SCREEN_HEIGHT // 2 - IMAGE_SIZE // 2, IMAGE_SIZE, IMAGE_SIZE)
+        self.rect = py.Rect(SCREEN_WIDTH // 2 - IMAGE_SIZE // 2, SCREEN_HEIGHT // 2 - IMAGE_SIZE // 2, IMAGE_SIZE,
+                            IMAGE_SIZE)
         self.v = PLAYER_V
         self.health = PLAYER_HEALTH
         self.invulnerable = False
@@ -297,6 +303,7 @@ class Player(py.sprite.Sprite):
     def minus_ammo(self):
         self.ammo -= 1
 
+
 class Projectile(py.sprite.Sprite):
     def __init__(self, player):
         super().__init__()
@@ -330,6 +337,7 @@ class Projectile(py.sprite.Sprite):
                 return 1
         return 0
 
+
 class Enemy(py.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -353,6 +361,7 @@ class Enemy(py.sprite.Sprite):
     def get_health(self):
         return self.health
 
+
 class StrongerEnemy(Enemy):
     def __init__(self):
         super().__init__()
@@ -360,11 +369,13 @@ class StrongerEnemy(Enemy):
         self.v = STRONG_ENEMY_V
         self.img = py.image.load(STRONGER_ENEMY_IMG).convert_alpha()
 
+
 class StrongestEnemy(StrongerEnemy):
     def __init__(self):
         super().__init__()
         self.health = STRONGEST_ENEMY_HEALTH
         self.img = py.image.load(STRONGEST_ENEMY_IMG).convert_alpha()
+
 
 class OceanBackground:
     def __init__(self, width, height):
