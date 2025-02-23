@@ -8,12 +8,14 @@ import math
 SCREEN_WIDTH = 600
 SCREEN_HEIGHT = 600
 FPS = 30
-PLAYER_IMG = "new_fish.png"
-ENEMY_IMG = "final_shark_64x64.png"
-PROJECTILE_IMG = "new_bubble.png"
-STRONG_ENEMY_IMG = "strong_shark.png"
+# assets
+PLAYER_IMG = "player.png"
+ENEMY_IMG = "enemy.png"
+PROJECTILE_IMG = "projectile.png"
+STRONGER_ENEMY_IMG = "stronger_enemy.png"
+STRONGEST_ENEMY_IMG = "strongest_enemy.png"
 IMAGE_SIZE = 64
-
+# OceanBackground colours
 TOP_COLOUR = (173, 216, 230)
 BOTTOM_COLOUR = (0, 0, 128)
 WAVE_COLOUR = (255, 255, 255, 90)
@@ -22,87 +24,7 @@ CORAL_COLOUR = (139, 69, 19)
 BUBBLE_COLOUR = (224, 255, 255)
 
 
-# SUBPROGRAMS
-def create_gradient_surface(width, height, top_colour, bottom_colour):
-    gradient = py.Surface((width, height))
-    for y in range(height):
-        factor = y / height
-        red = int(top_colour[0] + factor * (bottom_colour[0] - top_colour[0]))
-        green = int(top_colour[1] + factor * (bottom_colour[1] - top_colour[1]))
-        blue = int(top_colour[2] + factor * (bottom_colour[2] - top_colour[2]))
-        py.draw.line(gradient, (red, green, blue), (0, y), (width, y))
-    return gradient
-
-
 # CLASSES
-class OceanBackground:
-    def __init__(self, width, height):
-        self.width = width
-        self.height = height
-        self.gradient_surface = create_gradient_surface(width, height, TOP_COLOUR, BOTTOM_COLOUR)
-        self.wave_phase = 0
-        self.wave_speed = 0.05
-        self.wave_amplitude = 10
-        self.wave_frequency = 0.02
-        self.bubbles = self.create_bubbles(15)
-
-    def create_bubbles(self, count):
-        bubbles = []
-        for _ in range(count):
-            bubble = {
-                'x': random.randint(50, self.width - 50),
-                'y': random.randint(self.height - 100, self.height - 10),
-                'radius': random.randint(3, 8),
-                'speed': random.uniform(0.5, 1.5)
-            }
-            bubbles.append(bubble)
-        return bubbles
-
-    def update_bubbles(self):
-        for bubble in self.bubbles:
-            bubble['y'] -= bubble['speed']
-            if bubble['y'] + bubble['radius'] < 0:
-                bubble['x'] = random.randint(50, self.width - 50)
-                bubble['y'] = self.height + random.randint(5, 50)
-                bubble['radius'] = random.randint(3, 8)
-                bubble['speed'] = random.uniform(0.5, 1.5)
-
-    def draw(self, screen):
-        screen.blit(self.gradient_surface, (0, 0))
-        self.draw_light_beams(screen)
-        self.draw_waves(screen)
-        self.update_bubbles()
-        self.draw_bubbles(screen)
-
-    def draw_waves(self, screen):
-        points = []
-        for x in range(0, self.width, 5):
-            y = int(50 + self.wave_amplitude * math.sin(self.wave_frequency * x + self.wave_phase))
-            points.append((x, y))
-        self.wave_phase += self.wave_speed
-        wave_surface = py.Surface((self.width, 60), py.SRCALPHA)
-        if len(points) > 1:
-            py.draw.aalines(wave_surface, WAVE_COLOUR, False, points)
-        screen.blit(wave_surface, (0, 0))
-
-    def draw_light_beams(self, screen):
-        beam_surface = py.Surface((self.width, self.height), py.SRCALPHA)
-        beam_positions = [self.width * 0.2, self.width * 0.5, self.width * 0.8]
-        for pos in beam_positions:
-            beam_width = 100
-            points = [
-                (pos - beam_width * 0.5, 0),
-                (pos + beam_width * 0.5, 0),
-                (pos + beam_width * 1.5, self.height),
-                (pos - beam_width * 1.5, self.height)
-            ]
-            py.draw.polygon(beam_surface, BEAM_COLOUR, points)
-        screen.blit(beam_surface, (0, 0))
-
-    def draw_bubbles(self, screen):
-        for bubble in self.bubbles:
-            py.draw.circle(screen, BUBBLE_COLOUR, (int(bubble['x']), int(bubble['y'])), bubble['radius'], 2)
-
 class Game:
     def __init__(self):
         py.init()
@@ -133,17 +55,16 @@ class Game:
         while self.running:
             for event in py.event.get():
                 if event.type == py.QUIT:
-                    py.quit()
-                elif event.type == py.KEYDOWN:
+                    self.running = False
+                if event.type == py.KEYDOWN:
                     if event.key == py.K_ESCAPE:
-                        py.quit()
-                    elif event.key == py.K_RETURN:
                         self.running = False
-        self.main_screen()
+                    if event.key == py.K_RETURN:
+                        self.main_screen()
+        py.quit()
 
     def end_screen(self):
         self.running = True
-
         if self.score > self.high_score:
             self.high_score = self.score
 
@@ -175,33 +96,36 @@ class Game:
         while self.running:
             for event in py.event.get():
                 if event.type == py.QUIT:
-                    py.quit()
-                elif event.type == py.KEYDOWN:
+                    self.running = False
+                if event.type == py.KEYDOWN:
                     if event.key == py.K_ESCAPE:
-                        py.quit()
-                    elif event.key == py.K_RETURN:
                         self.running = False
+                    if event.key == py.K_RETURN:
+                        for sprite in self.sprites:
+                            del sprite
 
-        self.player = Player()
-        self.sprites = []
-        self.enemies = []
-        self.sprites.append(self.player)
-        self.running = True
-        self.count = 1
-        self.score = 0
+                        self.player = Player()
+                        self.sprites = []
+                        self.enemies = []
+                        self.projectiles = []
+                        self.sprites.append(self.player)
+                        self.running = True
+                        self.count = 1
+                        self.score = 0
 
-        self.main_screen()
+                        self.main_screen()
+        py.quit()
+
 
     def main_screen(self):
-        self.running = True
         while self.running:
             for event in py.event.get():
                 if event.type == py.QUIT:
                     py.quit()
-                elif event.type == py.KEYDOWN:
+                if event.type == py.KEYDOWN:
                     if event.key == py.K_ESCAPE:
                         py.quit()
-                    elif event.key == py.K_SPACE:
+                    if event.key == py.K_SPACE:
                         projectile = Projectile(self.player)
                         self.projectiles.append(projectile)
                         self.sprites.append(projectile)
@@ -225,11 +149,22 @@ class Game:
                     self.sprites.remove(self.projectiles[i])
                     del self.projectiles[i]
 
-            if self.count % (2 * FPS) == 0:
-                if self.count % (10 * FPS) == 0:
-                    enemy = StrongEnemy()
-                else:
-                    enemy = Enemy()
+            if self.count % (30 * FPS) == 0:
+                enemy1 = StrongestEnemy()
+                enemy2 = StrongerEnemy()
+                enemy3 = StrongerEnemy()
+                self.enemies.append(enemy1)
+                self.sprites.append(enemy1)
+                self.enemies.append(enemy2)
+                self.sprites.append(enemy2)
+                self.enemies.append(enemy3)
+                self.sprites.append(enemy3)
+            elif self.count % (10 * FPS) == 0:
+                enemy = StrongerEnemy()
+                self.enemies.append(enemy)
+                self.sprites.append(enemy)
+            elif self.count % (2 * FPS) == 0:
+                enemy = Enemy()
                 self.enemies.append(enemy)
                 self.sprites.append(enemy)
 
@@ -268,7 +203,7 @@ class Player(py.sprite.Sprite):
         self.img = py.image.load(PLAYER_IMG).convert_alpha()
         self.rect = py.Rect(SCREEN_WIDTH // 2 - IMAGE_SIZE // 2, SCREEN_HEIGHT // 2 - IMAGE_SIZE // 2, IMAGE_SIZE, IMAGE_SIZE)
         self.v = 5
-        self.health = 5
+        self.health = 3
         self.invulnerable = False
         self.invulnerable_count = 0
 
@@ -368,12 +303,99 @@ class Enemy(py.sprite.Sprite):
     def get_health(self):
         return self.health
 
-class StrongEnemy(Enemy):
+class StrongerEnemy(Enemy):
     def __init__(self):
         super().__init__()
         self.health = 5
         self.v = 4
-        self.img = py.image.load(STRONG_ENEMY_IMG).convert_alpha()
+        self.img = py.image.load(STRONGER_ENEMY_IMG).convert_alpha()
+
+class StrongestEnemy(StrongerEnemy):
+    def __init__(self):
+        super().__init__()
+        self.health = 10
+        self.img = py.image.load(STRONGEST_ENEMY_IMG).convert_alpha()
+
+class OceanBackground:
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+        self.gradient_surface = create_gradient_surface(width, height, TOP_COLOUR, BOTTOM_COLOUR)
+        self.wave_phase = 0
+        self.wave_speed = 0.05
+        self.wave_amplitude = 10
+        self.wave_frequency = 0.02
+        self.bubbles = self.create_bubbles(15)
+
+    def create_bubbles(self, count):
+        bubbles = []
+        for _ in range(count):
+            bubble = {
+                'x': random.randint(50, self.width - 50),
+                'y': random.randint(self.height - 100, self.height - 10),
+                'radius': random.randint(3, 8),
+                'speed': random.uniform(0.5, 1.5)
+            }
+            bubbles.append(bubble)
+        return bubbles
+
+    def update_bubbles(self):
+        for bubble in self.bubbles:
+            bubble['y'] -= bubble['speed']
+            if bubble['y'] + bubble['radius'] < 0:
+                bubble['x'] = random.randint(50, self.width - 50)
+                bubble['y'] = self.height + random.randint(5, 50)
+                bubble['radius'] = random.randint(3, 8)
+                bubble['speed'] = random.uniform(0.5, 1.5)
+
+    def draw(self, screen):
+        screen.blit(self.gradient_surface, (0, 0))
+        self.draw_light_beams(screen)
+        self.draw_waves(screen)
+        self.update_bubbles()
+        self.draw_bubbles(screen)
+
+    def draw_waves(self, screen):
+        points = []
+        for x in range(0, self.width, 5):
+            y = int(50 + self.wave_amplitude * math.sin(self.wave_frequency * x + self.wave_phase))
+            points.append((x, y))
+        self.wave_phase += self.wave_speed
+        wave_surface = py.Surface((self.width, 60), py.SRCALPHA)
+        if len(points) > 1:
+            py.draw.aalines(wave_surface, WAVE_COLOUR, False, points)
+        screen.blit(wave_surface, (0, 0))
+
+    def draw_light_beams(self, screen):
+        beam_surface = py.Surface((self.width, self.height), py.SRCALPHA)
+        beam_positions = [self.width * 0.2, self.width * 0.5, self.width * 0.8]
+        for pos in beam_positions:
+            beam_width = 100
+            points = [
+                (pos - beam_width * 0.5, 0),
+                (pos + beam_width * 0.5, 0),
+                (pos + beam_width * 1.5, self.height),
+                (pos - beam_width * 1.5, self.height)
+            ]
+            py.draw.polygon(beam_surface, BEAM_COLOUR, points)
+        screen.blit(beam_surface, (0, 0))
+
+    def draw_bubbles(self, screen):
+        for bubble in self.bubbles:
+            py.draw.circle(screen, BUBBLE_COLOUR, (int(bubble['x']), int(bubble['y'])), bubble['radius'], 2)
+
+
+# SUBPROGRAMS
+# for OceanBackground
+def create_gradient_surface(width, height, top_colour, bottom_colour):
+    gradient = py.Surface((width, height))
+    for y in range(height):
+        factor = y / height
+        red = int(top_colour[0] + factor * (bottom_colour[0] - top_colour[0]))
+        green = int(top_colour[1] + factor * (bottom_colour[1] - top_colour[1]))
+        blue = int(top_colour[2] + factor * (bottom_colour[2] - top_colour[2]))
+        py.draw.line(gradient, (red, green, blue), (0, y), (width, y))
+    return gradient
 
 
 # MAIN
