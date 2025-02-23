@@ -27,31 +27,35 @@ BUBBLE_COLOUR = (224, 255, 255)
 # CLASSES
 class Game:
     def __init__(self):
+        # general setup
         py.init()
         self.screen = py.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.clock = py.time.Clock()
+        self.font = py.font.SysFont("Arial", 20)
+        self.running = True
+        self.high_score = 0
+        self.background = OceanBackground(SCREEN_WIDTH, SCREEN_HEIGHT)
+        # repeatable setup
         self.player = Player()
         self.sprites = []
         self.enemies = []
         self.projectiles = []
         self.sprites.append(self.player)
-        self.running = True
-        self.font = py.font.SysFont("Arial", 20)
         self.count = 1
         self.score = 0
-        self.high_score = 0
-
-        self.background = OceanBackground(SCREEN_WIDTH, SCREEN_HEIGHT)
 
     def start_screen(self):
-        self.screen.fill((0, 0, 0))
+        # create text
         text = self.font.render("press enter to start", True, (255, 255, 255))
         text_rect = text.get_rect()
         text_rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
+
+        # display text
         self.screen.fill((0, 0, 0))
         self.screen.blit(text, text_rect)
         py.display.flip()
 
+        # loop for quiting game
         while self.running:
             for event in py.event.get():
                 if event.type == py.QUIT:
@@ -65,9 +69,12 @@ class Game:
 
     def end_screen(self):
         self.running = True
+
+        # scoring
         if self.score > self.high_score:
             self.high_score = self.score
 
+        # creating text
         text1 = self.font.render("GAME OVER", True, (255, 255, 255))
         text1_rect = text1.get_rect()
         text1_rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 40)
@@ -84,6 +91,7 @@ class Game:
         text4_rect = text4.get_rect()
         text4_rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 20)
 
+        # displaying text
         self.screen.fill((0, 0, 0))
 
         self.screen.blit(text1, text1_rect)
@@ -93,6 +101,7 @@ class Game:
 
         py.display.flip()
 
+        # loop for either replaying or quiting game
         while self.running:
             for event in py.event.get():
                 if event.type == py.QUIT:
@@ -103,21 +112,20 @@ class Game:
                     if event.key == py.K_RETURN:
                         for sprite in self.sprites:
                             del sprite
-
+                        # repeatable setup
                         self.player = Player()
                         self.sprites = []
                         self.enemies = []
                         self.projectiles = []
                         self.sprites.append(self.player)
-                        self.running = True
                         self.count = 1
                         self.score = 0
-
+                        # replay
                         self.main_screen()
         py.quit()
 
-
     def main_screen(self):
+        # game loop
         while self.running:
             for event in py.event.get():
                 if event.type == py.QUIT:
@@ -132,6 +140,7 @@ class Game:
 
             keys = py.key.get_pressed()
 
+            # creating text
             text1 = self.font.render(f"health: {self.player.get_health()}", True, (255, 255, 255))
             text1_rect = text1.get_rect()
             text1_rect.center = (SCREEN_WIDTH // 2, 20)
@@ -140,8 +149,10 @@ class Game:
             text2_rect = text2.get_rect()
             text2_rect.center = (SCREEN_WIDTH // 2, 40)
 
+            # updating projectiles
             for i in range(len(self.projectiles) - 1, 0, -1):
                 self.projectiles[i].move()
+                # deleting extra projectile objects
                 if self.projectiles[i].wall_collide():
                     self.sprites.remove(self.projectiles[i])
                     del self.projectiles[i]
@@ -149,6 +160,7 @@ class Game:
                     self.sprites.remove(self.projectiles[i])
                     del self.projectiles[i]
 
+            # spawning enemies
             if self.count % (30 * FPS) == 0:
                 enemy1 = StrongestEnemy()
                 enemy2 = StrongerEnemy()
@@ -168,12 +180,15 @@ class Game:
                 self.enemies.append(enemy)
                 self.sprites.append(enemy)
 
+            # updating enemies
             for i in range(len(self.enemies) - 1, 0, -1):
                 self.enemies[i].move_towards_player(self.player.get_pos())
+                # deleting dead enemy objects
                 if self.enemies[i].get_health() <= 0:
                     self.sprites.remove(self.enemies[i])
                     del self.enemies[i]
 
+            # updating player
             self.player.move(keys)
             self.player.wall_collide()
             self.player.is_invulnerable()
@@ -181,20 +196,23 @@ class Game:
             if self.player.get_health() <= 0:
                 self.running = False
 
+            # drawing ocean background
             self.background.draw(self.screen)
 
+            # drawing text
             self.screen.blit(text1, text1_rect)
             self.screen.blit(text2, text2_rect)
+
+            # displaying sprites
             for sprite in self.sprites:
                 self.screen.blit(sprite.img, sprite.rect)
 
+            # updating display and game
             py.display.flip()
             self.clock.tick(FPS)
             self.count += 1
-
             if self.count % FPS == 0:
                 self.score += 1
-
         self.end_screen()
 
 class Player(py.sprite.Sprite):
