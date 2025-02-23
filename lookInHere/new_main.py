@@ -22,6 +22,20 @@ WAVE_COLOUR = (255, 255, 255, 90)
 BEAM_COLOUR = (255, 255, 224, 40)
 CORAL_COLOUR = (139, 69, 19)
 BUBBLE_COLOUR = (224, 255, 255)
+# difficulty
+STRONGER_ENEMY_SPAWN_TIME = 10
+ENEMY_SPAWN_TIME = 2
+STRONGEST_ENEMY_SPAWN_TIME = 30
+AMMO_REGEN_TIME = 1
+INVULNERABILITY_TIME = 3
+PLAYER_V = 5
+PLAYER_HEALTH = 5
+PLAYER_AMMO = 2
+ENEMY_HEALTH = 2
+ENEMY_V = 3
+STRONGER_ENEMY_HEALTH = 5
+STRONG_ENEMY_V = 4
+STRONGEST_ENEMY_HEALTH = 10
 
 
 # CLASSES
@@ -134,9 +148,11 @@ class Game:
                     if event.key == py.K_ESCAPE:
                         py.quit()
                     if event.key == py.K_SPACE:
-                        projectile = Projectile(self.player)
-                        self.projectiles.append(projectile)
-                        self.sprites.append(projectile)
+                        if self.player.get_ammo() > 0:
+                            projectile = Projectile(self.player)
+                            self.projectiles.append(projectile)
+                            self.sprites.append(projectile)
+                            self.player.minus_ammo()
 
             keys = py.key.get_pressed()
 
@@ -148,6 +164,10 @@ class Game:
             text2 = self.font.render(f"score: {self.score}", True, (255, 255, 255))
             text2_rect = text2.get_rect()
             text2_rect.center = (SCREEN_WIDTH // 2, 40)
+
+            text3 = self.font.render(f"ammo: {self.player.get_ammo()}", True, (255, 255, 255))
+            text3_rect = text3.get_rect()
+            text3_rect.center = (SCREEN_WIDTH // 2, 60)
 
             # updating projectiles
             for i in range(len(self.projectiles) - 1, 0, -1):
@@ -161,7 +181,7 @@ class Game:
                     del self.projectiles[i]
 
             # spawning enemies
-            if self.count % (30 * FPS) == 0:
+            if self.count % (STRONGEST_ENEMY_SPAWN_TIME * FPS) == 0:
                 enemy1 = StrongestEnemy()
                 enemy2 = StrongerEnemy()
                 enemy3 = StrongerEnemy()
@@ -171,11 +191,11 @@ class Game:
                 self.sprites.append(enemy2)
                 self.enemies.append(enemy3)
                 self.sprites.append(enemy3)
-            elif self.count % (10 * FPS) == 0:
+            elif self.count % (STRONGER_ENEMY_SPAWN_TIME * FPS) == 0:
                 enemy = StrongerEnemy()
                 self.enemies.append(enemy)
                 self.sprites.append(enemy)
-            elif self.count % (2 * FPS) == 0:
+            elif self.count % (ENEMY_SPAWN_TIME * FPS) == 0:
                 enemy = Enemy()
                 self.enemies.append(enemy)
                 self.sprites.append(enemy)
@@ -195,6 +215,8 @@ class Game:
             self.player.enemy_collide(self.enemies)
             if self.player.get_health() <= 0:
                 self.running = False
+            if self.count % (AMMO_REGEN_TIME * FPS) == 0:
+                self.player.add_ammo()
 
             # drawing ocean background
             self.background.draw(self.screen)
@@ -202,6 +224,7 @@ class Game:
             # drawing text
             self.screen.blit(text1, text1_rect)
             self.screen.blit(text2, text2_rect)
+            self.screen.blit(text3, text3_rect)
 
             # displaying sprites
             for sprite in self.sprites:
@@ -220,10 +243,11 @@ class Player(py.sprite.Sprite):
         super().__init__()
         self.img = py.image.load(PLAYER_IMG).convert_alpha()
         self.rect = py.Rect(SCREEN_WIDTH // 2 - IMAGE_SIZE // 2, SCREEN_HEIGHT // 2 - IMAGE_SIZE // 2, IMAGE_SIZE, IMAGE_SIZE)
-        self.v = 5
-        self.health = 3
+        self.v = PLAYER_V
+        self.health = PLAYER_HEALTH
         self.invulnerable = False
         self.invulnerable_count = 0
+        self.ammo = PLAYER_AMMO
 
     def move(self, keys):
         if keys[py.K_UP]:
@@ -261,9 +285,18 @@ class Player(py.sprite.Sprite):
 
     def is_invulnerable(self):
         self.invulnerable_count += 1
-        if self.invulnerable_count >= 60:
+        if self.invulnerable_count >= (INVULNERABILITY_TIME * FPS):
             self.invulnerable = False
             self.invulnerable_count = 0
+
+    def add_ammo(self):
+        self.ammo += 1
+
+    def get_ammo(self):
+        return self.ammo
+
+    def minus_ammo(self):
+        self.ammo -= 1
 
 class Projectile(py.sprite.Sprite):
     def __init__(self, player):
@@ -303,8 +336,8 @@ class Enemy(py.sprite.Sprite):
         super().__init__()
         self.img = py.image.load(ENEMY_IMG).convert_alpha()
         self.rect = py.Rect(SCREEN_WIDTH, random.randint(0, SCREEN_HEIGHT - 50), IMAGE_SIZE, IMAGE_SIZE)
-        self.v = 3
-        self.health = 2
+        self.v = ENEMY_V
+        self.health = ENEMY_HEALTH
 
     def move_towards_player(self, player_pos):
         dx = player_pos[0] - self.rect.centerx
@@ -324,14 +357,14 @@ class Enemy(py.sprite.Sprite):
 class StrongerEnemy(Enemy):
     def __init__(self):
         super().__init__()
-        self.health = 5
-        self.v = 4
+        self.health = STRONGER_ENEMY_HEALTH
+        self.v = STRONG_ENEMY_V
         self.img = py.image.load(STRONGER_ENEMY_IMG).convert_alpha()
 
 class StrongestEnemy(StrongerEnemy):
     def __init__(self):
         super().__init__()
-        self.health = 10
+        self.health = STRONGEST_ENEMY_HEALTH
         self.img = py.image.load(STRONGEST_ENEMY_IMG).convert_alpha()
 
 class OceanBackground:
