@@ -30,7 +30,7 @@ AMMO_REGEN_TIME = 1
 INVULNERABILITY_TIME = 3
 PLAYER_V = 5
 PLAYER_HEALTH = 5
-PLAYER_AMMO = 2
+PLAYER_AMMO = 5
 ENEMY_HEALTH = 2
 ENEMY_V = 3
 STRONGER_ENEMY_HEALTH = 5
@@ -82,8 +82,6 @@ class Game:
         py.quit()
 
     def end_screen(self):
-        self.running = True
-
         # scoring
         if self.score > self.high_score:
             self.high_score = self.score
@@ -143,10 +141,10 @@ class Game:
         while self.running:
             for event in py.event.get():
                 if event.type == py.QUIT:
-                    py.quit()
+                    self.running = False
                 if event.type == py.KEYDOWN:
                     if event.key == py.K_ESCAPE:
-                        py.quit()
+                        self.running = False
                     if event.key == py.K_SPACE:
                         if self.player.get_ammo() > 0:
                             projectile = Projectile(self.player)
@@ -214,7 +212,8 @@ class Game:
             self.player.is_invulnerable()
             self.player.enemy_collide(self.enemies)
             if self.player.get_health() <= 0:
-                self.running = False
+                self.end_screen()
+                break
             if self.count % (AMMO_REGEN_TIME * FPS) == 0:
                 self.player.add_ammo()
 
@@ -236,7 +235,7 @@ class Game:
             self.count += 1
             if self.count % FPS == 0:
                 self.score += 1
-        self.end_screen()
+        py.quit()
 
 class Player(py.sprite.Sprite):
     def __init__(self):
